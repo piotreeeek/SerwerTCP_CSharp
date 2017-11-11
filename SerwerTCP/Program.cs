@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace SerwerTCP
 {
@@ -10,6 +12,7 @@ namespace SerwerTCP
         static void Main(string[] args)
         {
             Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            ArrayList clientList = new ArrayList();
             bool flag = true;
             int port = 7;
             while (flag)
@@ -36,45 +39,17 @@ namespace SerwerTCP
 
             }
 
-
-
-
             s.Listen(5);
 
             int counter = 0;
-            while (true)
+            for(; ; )
             {
                 Socket cli = s.Accept();
-                counter++;
-                while (cli.Connected)
-                {
-                    try
-                    {
-                        Console.WriteLine("Połączenie z {0}", cli.RemoteEndPoint.ToString());
-                        byte[] bufor = new byte[1024];
-                        cli.Receive(bufor);
-                        string temp = Encoding.UTF8.GetString(bufor).TrimEnd(new char[] { '\0' });
-                        Console.WriteLine(temp.Trim());
-                        foreach (char c in temp)
-                        {
-                            Console.WriteLine((int)c);
-                        }
-                        Console.WriteLine(temp.Length);
-
-                        Byte[] sendBytes = Encoding.UTF8.GetBytes(temp);
-                        cli.Send(sendBytes);
-                    }
-                    catch (SocketException)
-                    {
-
-                        cli.Close();
-                        Console.WriteLine("Polaczenie niepodziewanie zamknięto.");
-                    }
-                }
-                cli.Close();
-                Console.WriteLine("Polaczenie zamknieto.");
+                clientList.Add(cli);
+                ClientServerTheard clientServerTheard = new ClientServerTheard(cli);
+                Thread thread = new Thread(clientServerTheard.Run);
+                thread.Start();
             }
-
         }
     }
 }
